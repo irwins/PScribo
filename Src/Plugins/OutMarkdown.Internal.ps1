@@ -1,9 +1,9 @@
         #region OutText Private Functions
 
-        function New-PScriboTextOption {
+        function New-PScriboMarkdownOption {
         <#
             .SYNOPSIS
-                Sets the text plugin specific formatting/output options.
+                Sets the Markdown plugin specific formatting/output options.
             .NOTES
                 All plugin options should be prefixed with the plugin name.
         #>
@@ -56,7 +56,7 @@
         } #end function New-PScriboTextOption
 
 
-        function OutTextTOC {
+        function OutMarkdownTOC {
         <#
             .SYNOPSIS
                 Output formatted Table of Contents
@@ -106,7 +106,7 @@
         } #end function OutTextTOC
 
 
-        function OutTextBlankLine {
+        function OutMarkdownBlankLine {
         <#
             .SYNOPSIS
                 Output formatted text blankline.
@@ -129,7 +129,7 @@
         } #end function OutHtmlBlankLine
 
 
-        function OutTextSection {
+        function OutMarkdownSection {
         <#
             .SYNOPSIS
                 Output formatted text section.
@@ -152,11 +152,20 @@
             process {
 
                 $sectionBuilder = New-Object -TypeName System.Text.StringBuilder;
-                if ($Document.Options['EnableSectionNumbering']) { [string] $sectionName = '{0} {1}' -f $Section.Number, $Section.Name; }
-                else { [string] $sectionName = '{0}' -f $Section.Name; }
+
+                $headingLevel = '#' * ($Section.Level + 1)
+
+                if ($Document.Options['EnableSectionNumbering']) {
+                    [string] $sectionName = '{0} {1} {2}' -f $headingLevel, $Section.Number, $Section.Name;
+                }
+                else {
+                    [string] $sectionName = '{0} {1}' -f $headingLevel, $Section.Name;
+                }
+
                 [ref] $null = $sectionBuilder.AppendLine();
                 [ref] $null = $sectionBuilder.AppendLine($sectionName.TrimStart());
-                [ref] $null = $sectionBuilder.AppendLine(''.PadRight($options.SeparatorWidth, $options.SectionSeparator));
+                [ref] $null = $sectionBuilder.AppendLine();
+                
                 foreach ($s in $Section.Sections.GetEnumerator()) {
                     if ($s.Id.Length -gt 40) { $sectionId = '{0}..' -f $s.Id.Substring(0,38); }
                     else { $sectionId = $s.Id; }
@@ -164,12 +173,12 @@
                     if ($null -ne $s.PSObject.Properties['Level']) { $currentIndentationLevel = $s.Level +1; }
                     WriteLog -Message ($localized.PluginProcessingSection -f $s.Type, $sectionId) -Indent $currentIndentationLevel;
                     switch ($s.Type) {
-                        'PScribo.Section' { [ref] $null = $sectionBuilder.Append((OutTextSection -Section $s)); }
-                        'PScribo.Paragraph' { [ref] $null = $sectionBuilder.Append(($s | OutTextParagraph)); }
-                        'PScribo.PageBreak' { [ref] $null = $sectionBuilder.AppendLine((OutTextPageBreak)); }  ## Page breaks implemented as line break with extra padding
-                        'PScribo.LineBreak' { [ref] $null = $sectionBuilder.AppendLine((OutTextLineBreak)); }
-                        'PScribo.Table' { [ref] $null = $sectionBuilder.AppendLine(($s | OutTextTable)); }
-                        'PScribo.BlankLine' { [ref] $null = $sectionBuilder.AppendLine(($s | OutTextBlankLine)); }
+                        'PScribo.Section' { [ref] $null = $sectionBuilder.Append((OutMarkdownSection -Section $s)); }
+                        #'PScribo.Paragraph' { [ref] $null = $sectionBuilder.Append(($s | OutTextParagraph)); }
+                        #'PScribo.PageBreak' { [ref] $null = $sectionBuilder.AppendLine((OutTextPageBreak)); }  ## Page breaks implemented as line break with extra padding
+                        #'PScribo.LineBreak' { [ref] $null = $sectionBuilder.AppendLine((OutTextLineBreak)); }
+                        #'PScribo.Table' { [ref] $null = $sectionBuilder.AppendLine(($s | OutTextTable)); }
+                        #'PScribo.BlankLine' { [ref] $null = $sectionBuilder.AppendLine(($s | OutTextBlankLine)); }
                         Default { WriteLog -Message ($localized.PluginUnsupportedSection -f $s.Type) -IsWarning; }
                     } #end switch
                 } #end foreach
@@ -179,7 +188,7 @@
         } #end function outtextsection
 
 
-        function OutTextParagraph {
+        function OutMarkdownParagraph {
         <#
             .SYNOPSIS
                 Output formatted paragraph text.
@@ -215,7 +224,7 @@
         } #end outtextparagraph
 
 
-        function OutTextLineBreak {
+        function OutMarkdownLineBreak {
         <#
             .SYNOPSIS
                 Output formatted line break text.
@@ -243,7 +252,7 @@
         } #end function OutTextLineBreak
 
 
-        function OutTextPageBreak {
+        function OutMarkdownPageBreak {
         <#
             .SYNOPSIS
                 Output formatted line break text.
@@ -257,7 +266,7 @@
         } #end function OutTextLineBreak
 
 
-        function OutTextTable {
+        function OutMarkdownTable {
         <#
             .SYNOPSIS
                 Output formatted text table.
@@ -293,45 +302,5 @@
 
             } #end process
         } #end function outtexttable
-
-
-        function OutStringWrap {
-        <#
-            .SYNOPSIS
-                Outputs objects to strings, wrapping as required.
-        #>
-            [CmdletBinding()]
-            [OutputType([System.String])]
-            param (
-                [Parameter(Mandatory, ValueFromPipeline)]
-                [ValidateNotNull()]
-                [Object[]] $InputObject,
-
-                [Parameter()]
-                [ValidateNotNull()]
-                [System.Int32] $Width = $Host.UI.RawUI.BufferSize.Width
-            )
-            begin {
-
-                ## 2 is the minimum, therefore default to wiiiiiiiiiide!
-                if ($Width -lt 2) { $Width = 4096; }
-                WriteLog -Message ('Wrapping text at "{0}" characters.' -f $Width) -IsDebug;
-
-            }
-            process {
-
-                foreach ($object in $InputObject) {
-                    $textBuilder = New-Object -TypeName System.Text.StringBuilder;
-                    $text = (Out-String -InputObject $object).TrimEnd("`r`n");
-                    for ($i = 0; $i -le $text.Length; $i += $Width) {
-                        if (($i + $Width) -ge ($text.Length -1)) { [ref] $null = $textBuilder.Append($text.Substring($i)); }
-                        else { [ref] $null = $textBuilder.AppendLine($text.Substring($i, $Width)); }
-                    } #end for
-                    return $textBuilder.ToString();
-                    $textBuilder = $null;
-                } #end foreach
-
-            } #end process
-        } #end function OutStringWrap
 
         #endregion OutText Private Functions

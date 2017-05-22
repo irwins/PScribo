@@ -1,11 +1,13 @@
+param ([System.Management.Automation.SwitchParameter] $PassThru)
+
 Import-Module PScribo -Force;
 
 $example7 = Document -Name 'PScribo Example 7' {
     <#
        Sections support automatic numbering, i.e. PScribo will automatically generate the section
-       numbers/levels based on the nesting. To turn this on, use the 'GlobalOption' cmdlet.
+       numbers/levels based on the nesting. To turn this on, use the 'DocumentOption' cmdlet.
     #>
-    GlobalOption -EnableSectionNumbering -MarginTopAndBottom 72 -MarginLeftAndRight 54
+    DocumentOption -EnableSectionNumbering -MarginTopAndBottom 72 -MarginLeftAndRight 54
 
     Section -Name 'First Section' -ScriptBlock {
         Paragraph 'This section should be labeled as "1 First Section".'
@@ -23,4 +25,4 @@ $example7 = Document -Name 'PScribo Example 7' {
         }
     }
 }
-$example7 | Export-Document -Format Html -Path ~\Desktop
+$example7 | Export-Document -Format Html -Path ~\Desktop -PassThru:$PassThru

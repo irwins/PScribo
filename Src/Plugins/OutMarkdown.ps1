@@ -1,4 +1,4 @@
-function OutText {
+function OutMarkdown {
 <#
     .SYNOPSIS
         Text output plugin for PScribo.
@@ -24,7 +24,7 @@ function OutText {
     )
     begin {
         
-        $pluginName = 'Text';
+        $pluginName = 'Markdown';
 
         <#! OutText.Internal.ps1 !#>
 
@@ -50,19 +50,19 @@ function OutText {
             if ($null -ne $s.PSObject.Properties['Level']) { $currentIndentationLevel = $s.Level +1; }
             WriteLog -Message ($localized.PluginProcessingSection -f $s.Type, $sectionId) -Indent $currentIndentationLevel;
             switch ($s.Type) {
-                'PScribo.Section' { [ref] $null = $textBuilder.Append((OutTextSection -Section $s)); }
-                'PScribo.Paragraph' { [ref] $null = $textBuilder.Append(($s | OutTextParagraph)); }
-                'PScribo.PageBreak' { [ref] $null = $textBuilder.AppendLine((OutTextPageBreak)); }
-                'PScribo.LineBreak' { [ref] $null = $textBuilder.AppendLine((OutTextLineBreak)); }
-                'PScribo.Table' { [ref] $null = $textBuilder.AppendLine(($s | OutTextTable)); }
-                'PScribo.TOC' { [ref] $null = $textBuilder.AppendLine(($s | OutTextTOC)); }
-                'PScribo.BlankLine' { [ref] $null = $textBuilder.AppendLine(($s | OutTextBlankLine)); }
+                'PScribo.Section' { [ref] $null = $textBuilder.Append((OutMarkdownSection -Section $s)); }
+                #'PScribo.Paragraph' { [ref] $null = $textBuilder.Append(($s | OutTextParagraph)); }
+                #'PScribo.PageBreak' { [ref] $null = $textBuilder.AppendLine((OutTextPageBreak)); }
+                #'PScribo.LineBreak' { [ref] $null = $textBuilder.AppendLine((OutTextLineBreak)); }
+                #'PScribo.Table' { [ref] $null = $textBuilder.AppendLine(($s | OutTextTable)); }
+                #'PScribo.TOC' { [ref] $null = $textBuilder.AppendLine(($s | OutTextTOC)); }
+                #'PScribo.BlankLine' { [ref] $null = $textBuilder.AppendLine(($s | OutTextBlankLine)); }
                 Default { WriteLog -Message ($localized.PluginUnsupportedSection -f $s.Type) -IsWarning; }
             } #end switch
         } #end foreach
         $stopwatch.Stop();
         WriteLog -Message ($localized.DocumentProcessingCompleted -f $Document.Name);
-        $destinationPath = Join-Path -Path $Path ('{0}.txt' -f $Document.Name);
+        $destinationPath = Join-Path -Path $Path ('{0}.md' -f $Document.Name);
         WriteLog -Message ($localized.SavingFile -f $destinationPath);
         Set-Content -Value ($textBuilder.ToString()) -Path $destinationPath -Encoding $Options.Encoding;
         [ref] $null = $textBuilder;

@@ -1,7 +1,9 @@
+param ([System.Management.Automation.SwitchParameter] $PassThru)
+
 Import-Module PScribo -Force;
 
 $example9 = Document -Name 'PScribo Example 9' {
-    GlobalOption -EnableSectionNumbering -MarginTopAndBottom 72 -MarginLeftAndRight 54
+    DocumentOption -EnableSectionNumbering -MarginTopAndBottom 72 -MarginLeftAndRight 54
     TOC -Name 'Table of Contents'
 
     <#
@@ -50,4 +52,4 @@ $example9 = Document -Name 'PScribo Example 9' {
         }
     }
 }
-$example9 | Export-Document -Format Html -Path ~\Desktop
+$example9 | Export-Document -Format Html -Path ~\Desktop -PassThru:$PassThru

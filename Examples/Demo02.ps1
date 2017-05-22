@@ -1,3 +1,5 @@
+param ([System.Management.Automation.SwitchParameter] $PassThru)
+
 Import-Module PScribo -Force;
 
 <# The document name is used in the file output #>
@@ -5,7 +7,7 @@ $document = Document 'PScribo Demo 2' -Verbose {
     <#  Enforce uppercase section headers/names
         Enable automatic section numbering
         Set the page size to US Letter with 0.5inch margins #>
-    GlobalOption -ForceUppercaseSection -EnableSectionNumbering -PageSize Letter -Margin 36;
+    DocumentOption -ForceUppercaseSection -EnableSectionNumbering -PageSize Letter -Margin 36;
     BlankLine -Count 20;
     Paragraph 'PScribo Demo 2' -Style Title;
     BlankLine -Count 20;
@@ -35,12 +37,12 @@ $document = Document 'PScribo Demo 2' -Verbose {
     Paragraph "This is a regular line of text indented 0 tab stops with the computer name as data in 14 point bold italics: $env:COMPUTERNAME" -Bold -Italic -Size 14
     Paragraph "This is a regular line of text indented 0 tab stops with the computer name as data in 8 point Courier New bold italics: $env:COMPUTERNAME" -Bold -Italic -Size 8 -Font 'Courier New'
 
-    $services = Get-WMIObject Win32_Service | Select DisplayName, State, StartMode | Sort DisplayName
+    $services = Get-CimInstance -ClassName Win32_Service | Select-Object -Property DisplayName, State, StartMode | Sort-Object -Property DisplayName
     <# Add a custom style for highlighting table cells/rows #>
     Style -Name 'Stopped Service' -Color White -BackgroundColor Firebrick -Bold
 
     <#  Sections provide an easy way of creating a document structure and can support section
-        numbering (if enabled with the GlobalOption -EnableSectionNumbering parameter. You don't
+        numbering (if enabled with the DocumentOption -EnableSectionNumbering parameter. You don't
         need to worry about the numbers as PScribo will figure this out. #>
     Section -Style Heading1 'Standard-Style Tables' {
         Section -Style Heading2 'Autofit Width Autofit Cell No Highlighting' {
@@ -98,4 +100,4 @@ $document = Document 'PScribo Demo 2' -Verbose {
     }
 }
 <#  Generate 'PScribo Demo 2.docx' and 'PScribo Demo 2.html' files. Other supported formats include 'Text' and 'Xml' #>
-$document | Export-Document -Path ~\Desktop -Format Word,Html -Verbose;
+$document | Export-Document -Path ~\Desktop -Format Word,Html -PassThru:$PassThru -Verbose;
